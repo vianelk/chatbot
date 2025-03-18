@@ -22,7 +22,7 @@ jobs:
 
       - name: Deploy on Azure VM
         run: |
-          ssh -i ~/.ssh/id_rsa user@${{ secrets.AZURE_HOST }} << 'EOF'
+          ssh -i ~/.ssh/id_rsa azureuser@${{ secrets.AZURE_HOST }} << 'EOF'
           cd /home/user/app
           git pull origin main
           docker-compose down
