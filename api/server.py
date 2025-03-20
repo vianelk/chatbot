@@ -1,9 +1,11 @@
 import os
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import StreamingResponse
 from azure.storage.blob import BlobServiceClient
 import os
 from dotenv import load_dotenv
 from openai import AzureOpenAI
+import asyncio
 
 # Initialisation de FastAPI
 app = FastAPI()
@@ -50,11 +52,9 @@ client = AzureOpenAI(
     api_version="2024-05-01-preview",
 )
 
-# Endpoint pour interagir avec Azure OpenAI
-@app.post("/openai/chat/")
-async def chat_with_openai(prompt: str):
+# Fonction de streaming des tokens
+async def generate_response(prompt: str):
     try:
-        # Préparer l’invite de conversation
         chat_prompt = [
             {
                 "role": "system",
@@ -70,14 +70,14 @@ async def chat_with_openai(prompt: str):
                 "content": [
                     {
                         "type": "text",
-                        "text": prompt  # Utiliser le prompt de l'utilisateur
+                        "text": prompt
                     }
                 ]
             }
         ]
 
-        # Générer l’achèvement
-        completion = client.chat.completions.create(
+        # Activation du mode streaming
+        response = client.chat.completions.create(
             model=OPENAI_DEPLOYMENT_NAME,
             messages=chat_prompt,
             max_tokens=800,
@@ -86,17 +86,23 @@ async def chat_with_openai(prompt: str):
             frequency_penalty=0,
             presence_penalty=0,
             stop=None,
-            stream=False
+            stream=True  # ⚡ Active le streaming
         )
 
-        # Extraire le contenu de la réponse
-        response_content = completion.choices[0].message.content
-
-        return {"content": response_content}  # Retourner uniquement le contenu
+        # Lire les tokens au fur et à mesure
+        for chunk in response:
+            if chunk.choices:
+                yield chunk.choices[0].delta.content  # Envoie chaque morceau au client
+                await asyncio.sleep(0)  # Laisse FastAPI gérer l'async
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-# Lancement du serveur FastAPI avec Uvicorn
+
+# Endpoint de chat avec streaming
+@app.post("/openai/chat/")
+async def chat_with_openai(prompt: str):
+    return StreamingResponse(generate_response(prompt), media_type="text/plain")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=9000)
