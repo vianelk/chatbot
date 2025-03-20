@@ -1,14 +1,24 @@
 import os
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from azure.storage.blob import BlobServiceClient
 import os
 from dotenv import load_dotenv
 from openai import AzureOpenAI
 import asyncio
-
+from typing import List
 # Initialisation de FastAPI
 app = FastAPI()
+
+# Configuration CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Autorise toutes les origines (* = tous les domaines)
+    allow_credentials=True,
+    allow_methods=["*"],  # Autorise toutes les méthodes HTTP (GET, POST, etc.)
+    allow_headers=["*"],  # Autorise tous les headers
+)
 load_dotenv()
 # Chargement des variables d'environnement
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
@@ -28,19 +38,20 @@ def read_root():
     return {"message": "Serveur FastAPI sur le port 9000"}
 
 @app.post("/upload/")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(files: List[UploadFile] = File(...)):
     """
     Endpoint permettant d'uploader un fichier vers Azure Blob Storage.
     """
     try:
-        # Création du client blob
-        blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=file.filename)
+        for file in files:
+            # Crée le client Blob pour chaque fichier
+            blob_client = blob_service_client.get_blob_client(container=CONTAINER_NAME, blob=file.filename)
 
-        # Lecture du fichier et upload
-        with file.file as data:
-            blob_client.upload_blob(data, overwrite=True)  # overwrite=True pour écraser un fichier existant
+            # Lecture du fichier et upload
+            with file.file as data:
+                blob_client.upload_blob(data, overwrite=True)
 
-        return {"message": f"✅ {file.filename} uploadé avec succès dans {CONTAINER_NAME}"}
+        return {"message": f"✅ {len(files)} fichier(s) uploadé(s) avec succès!"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -54,6 +65,7 @@ client = AzureOpenAI(
 
 # Fonction de streaming des tokens
 async def generate_response(prompt: str):
+    print(prompt)
     try:
         chat_prompt = [
             {
@@ -61,7 +73,7 @@ async def generate_response(prompt: str):
                 "content": [
                     {
                         "type": "text",
-                        "text": "Vous êtes un(e) assistant(e) IA qui permet aux utilisateurs de trouver des informations."
+                        "text": "Vous êtes un(e) assistant(e) IA qui permet aux utilisateurs de trouver des informations. sois bref et conscit "
                     }
                 ]
             },
@@ -101,8 +113,14 @@ async def generate_response(prompt: str):
 # Endpoint de chat avec streaming
 @app.post("/openai/chat/")
 async def chat_with_openai(prompt: str):
+    print(prompt)
     return StreamingResponse(generate_response(prompt), media_type="text/plain")
 
+
+@app.post("/test/")
+def test(msg:str):
+    print("okey")
+    return { msg : "ok"}
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=9000)

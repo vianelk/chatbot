@@ -4,7 +4,6 @@
 
 <template>
   <div>
-    <h1>Bienvenue sur mon site</h1>
     <nav>
       <router-link to="/chat">chat</router-link> |
       <router-link to="/upload">upload</router-link>

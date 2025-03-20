@@ -1,14 +1,17 @@
 <template>
     <div class="max-w-lg mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-      <h1 class="text-2xl font-bold mb-4">Chat Azure OpenAI</h1>
+      <h1 class="text-2xl font-bold mb-4">Chat Veto Entreprise</h1>
   
       <div class="border p-4 mb-4 h-64 overflow-y-auto bg-gray-100 rounded">
         <div v-for="(msg, index) in messages" :key="index" class="mb-2">
           <span :class="msg.sender === 'user' ? 'text-blue-600' : 'text-green-600'">
             {{ msg.sender }}:
           </span>
+          
           {{ msg.text }}
+          <br>
         </div>
+        
       </div>
   
       <form @submit.prevent="sendMessage" class="flex">
@@ -49,11 +52,11 @@
     messages.value.push({ sender: 'user', text: userMessage.value });
     isLoading.value = true;
   
-    const response = await fetch('http://localhost:8000/openai/chat/', {
+    const response = await fetch('http://localhost:9000/openai/chat/?prompt=""'+userMessage.value+'"', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: userMessage.value }),
+      headers: { 'Content-Type': 'text/plain' },
     });
+    isLoading.value = false
   
     userMessage.value = ''; // Réinitialiser l'input
   
