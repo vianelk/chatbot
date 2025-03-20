@@ -8,7 +8,10 @@ services:
       - "9000:9000"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+          NODE_ENV: ${NODE_ENV}  # On passe l'argument NODE_ENV
     restart: on-failure
     ports:
       - "8080:80"
