@@ -1,0 +1,10 @@
+version: "3.8"
+name: "chatbot"
+services:
+  frontend:
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Évite les conflits avec les modules locaux
+    command: npm run dev  # En développement, on exécute `npm run dev`
+    ports:
+      - "5173:5173"
