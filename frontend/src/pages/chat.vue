@@ -8,7 +8,7 @@
             {{ msg.sender }}:
           </span>
           
-          {{ msg.text }}
+          {{ msg.text}} 
           <br>
         </div>
         
@@ -33,7 +33,7 @@
   </template>
   
   <script setup lang="ts">
-  import { ref } from 'vue';
+  import { ref, computed } from 'vue';
   
   // Interface pour un message
   interface Message {
@@ -41,6 +41,7 @@
     text: string;
   }
   
+   
   const userMessage = ref('');
   const messages = ref<Message[]>([]);
   const isLoading = ref(false);
@@ -52,7 +53,7 @@
     messages.value.push({ sender: 'user', text: userMessage.value });
     isLoading.value = true;
   
-    const response = await fetch('http://localhost:9000/openai/chat/?prompt=""'+userMessage.value+'"', {
+    const response = await fetch('http://localhost:9000/openai/chat2/?prompt=""'+userMessage.value+'"', {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
     });
