@@ -26,52 +26,53 @@
     </div>
   </template>
   
-<script setup>
-  import { ref } from 'vue'
-  import axios from 'axios'
+  <script setup lang="ts">
+    import { ref } from 'vue'
+    import axios from 'axios'
   
-  // Déclaration des variables réactives
-  const selectedFiles = ref([]);
-  const isUploading = ref(false)
-  const successMessage = ref("")
-  const errorMessage = ref("")
+    // Déclaration des variables réactives
+    const selectedFiles = ref<File[]>([]);
+    const isUploading = ref(false)
+    const successMessage = ref("")
+    const errorMessage = ref("")
   
-  // Capture les fichiers sélectionnés
-  const handleFiles = (event) => {
-    selectedFiles.value = event.target.files
-  };
+    // Capture les fichiers sélectionnés
+    const handleFiles = (event : Event) => {
+      const input = event.target as HTMLInputElement;
+      if (input.files) {
+        selectedFiles.value = Array.from(input.files);
+      }
+    };
   
-  // Envoie les fichiers au serveur
-  const uploadFiles = async () => {
-    if (selectedFiles.value.length === 0) {
-      errorMessage.value = "Veuillez sélectionner des fichiers."
-      return;
-    }
+    // Envoie les fichiers au serveur
+    const uploadFiles = async () => {
+      if (selectedFiles.value.length === 0) {
+        errorMessage.value = "Veuillez sélectionner des fichiers."
+        return;
+      }
   
-    isUploading.value = true
-    successMessage.value = ""
-    errorMessage.value = ""
+      isUploading.value = true
+      successMessage.value = ""
+      errorMessage.value = ""
   
-    const formData = new FormData();
-    for (let file of selectedFiles.value) {
-      formData.append("files", file)
-    }
-  
-    try {
-      const response = await axios.post("http://localhost:9000/items/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      const formData = new FormData();
+      selectedFiles.value.forEach((file, index) => {
+        formData.append(`file[]`, file);  // Utilisation de `file[]` pour chaque fichier
       });
   
-      successMessage.value = response.data.message || "Fichiers envoyés avec succès !"
-    } catch (error) {
-      errorMessage.value = error
-      console.log(error)
-    } finally {
-      isUploading.value = false
-    }
-  };
-</script>
+      try {
+        const response = await axios.post("http://localhost:9000/upload/", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
   
+        successMessage.value = response.data.message || "Fichiers envoyés avec succès !"
+      } catch (error) {
+        errorMessage.value = "Fichier(s) non envoyé(s)"
+      } finally {
+        isUploading.value = false
+      }
+    };
+  </script>
   

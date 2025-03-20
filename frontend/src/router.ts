@@ -4,8 +4,8 @@ import upload from './pages/upload.vue';
 
 const routes = [
   { path: '/', redirect: '/chat' },
-  { path: '/upload', component: chat },
-  { path: '/chat', component: upload },
+  { path: '/upload', component: upload },
+  { path: '/chat', component: chat },
 
 ];
 
