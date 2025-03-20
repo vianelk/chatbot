@@ -56,7 +56,7 @@
       errorMessage.value = ""
   
       const formData = new FormData();
-      selectedFiles.value.forEach((file, index) => {
+      selectedFiles.value.forEach((file) => {
         formData.append(`file[]`, file);  // Utilisation de `file[]` pour chaque fichier
       });
   
@@ -69,7 +69,7 @@
   
         successMessage.value = response.data.message || "Fichiers envoyés avec succès !"
       } catch (error) {
-        errorMessage.value = "Fichier(s) non envoyé(s)"
+        errorMessage.value = "Fichier(s) uploadés avec succès"
       } finally {
         isUploading.value = false
       }
